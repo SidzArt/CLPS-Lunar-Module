@@ -19,6 +19,7 @@ from app.integrations.spice.ephemeris import (
     ObserverSiteState,
     build_observer_state,
     compute_ephemeris_sample,
+    compute_inertial_orbital_trajectory,
     summarize_kernel_metadata,
 )
 from app.integrations.spice.kernel_manager import (
@@ -1008,6 +1009,94 @@ def get_simulation_series_payload(
         "limit": limit,
         "downsample_step": downsample_step,
         "samples": samples_payload,
+    }
+
+
+def get_simulation_orbital_trajectory_payload(
+    db: Session,
+    simulation_id: uuid.UUID,
+    *,
+    samples: int = 1024,
+) -> dict[str, Any]:
+    """Compute read-only SPICE ECLIPJ2000 Sun-Earth-Moon vectors and Moon orientation for a run."""
+    run = simulation_repo.get_simulation_run(db, simulation_id)
+    if run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Simulation {simulation_id} not found.",
+        )
+    site = simulation_repo.get_site_for_simulation(db, run.site_id)
+    if site is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Landing site {run.site_id} not found.",
+        )
+
+    start_utc = (
+        run.start_time_utc.replace(tzinfo=UTC)
+        if run.start_time_utc.tzinfo is None
+        else run.start_time_utc.astimezone(UTC)
+    )
+    end_utc = start_utc + timedelta(seconds=int(run.duration_seconds))
+
+    try:
+        kernel_state, trajectory = compute_inertial_orbital_trajectory(
+            start_time_utc=start_utc,
+            end_time_utc=end_utc,
+            num_samples=samples,
+            frame="ECLIPJ2000",
+            abcorr="NONE",
+        )
+    except SpiceCoverageError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "code": "SPICE_COVERAGE_ERROR",
+                "message": "Simulation interval falls outside loaded SPICE kernel coverage.",
+                "valid_start_utc": exc.valid_start_utc,
+                "valid_end_utc": exc.valid_end_utc,
+                "responsible_kernel": exc.responsible_kernel,
+            },
+        ) from exc
+    except SpiceKernelError as exc:
+        logger.error("SPICE orbital trajectory kernel failure [sim=%s]: %s", simulation_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SPICE ephemeris kernels are unavailable or failed integrity verification.",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "simulation_id": run.simulation_id,
+        "site": _build_simulation_site_summary(db, run, site),
+        "coordinate_frame": "ECLIPJ2000",
+        "lunar_body_frame": "MOON_ME",
+        "distance_units": "kilometers",
+        "aberration_policy": "NONE",
+        "ephemeris_source": kernel_state.ephemeris_source,
+        "ephemeris_version": kernel_state.ephemeris_version,
+        "start_time_utc": start_utc,
+        "end_time_utc": end_utc,
+        "duration_seconds": int(run.duration_seconds),
+        "sample_count": len(trajectory),
+        "coverage_start_utc": kernel_state.common_start_utc,
+        "coverage_end_utc": kernel_state.common_end_utc,
+        "samples": [
+            {
+                "timestamp_utc": pt.timestamp_utc,
+                "ephemeris_time": pt.ephemeris_time,
+                "elapsed_seconds": pt.elapsed_seconds,
+                "earth_wrt_sun_eclipj2000_km": pt.earth_wrt_sun_eclipj2000_km,
+                "moon_wrt_earth_eclipj2000_km": pt.moon_wrt_earth_eclipj2000_km,
+                "moon_wrt_sun_eclipj2000_km": pt.moon_wrt_sun_eclipj2000_km,
+                "moon_me_to_eclipj2000": pt.moon_me_to_eclipj2000,
+            }
+            for pt in trajectory
+        ],
     }
 
 

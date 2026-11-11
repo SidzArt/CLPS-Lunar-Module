@@ -31,6 +31,39 @@ export type SimulationEventsOut = Schema["SimulationEventsOut"];
 export type SimulationEventOut = Schema["SimulationEventOut"];
 export type SimulationCancelOut = Schema["SimulationCancelOut"];
 export type HorizonCurveOut = Schema["HorizonCurveOut"];
+export type SiteSimulationSummaryOut = Schema["SiteSimulationSummaryOut"];
+
+export interface OrbitalTrajectorySampleOut {
+  timestamp_utc: string;
+  ephemeris_time: number;
+  elapsed_seconds: number;
+  earth_wrt_sun_eclipj2000_km: [number, number, number];
+  moon_wrt_earth_eclipj2000_km: [number, number, number];
+  moon_wrt_sun_eclipj2000_km: [number, number, number];
+  moon_me_to_eclipj2000: [
+    [number, number, number],
+    [number, number, number],
+    [number, number, number],
+  ];
+}
+
+export interface OrbitalTrajectoryOut {
+  simulation_id: string;
+  site: SiteSimulationSummaryOut;
+  coordinate_frame: string;
+  lunar_body_frame: string;
+  distance_units: string;
+  aberration_policy: string;
+  ephemeris_source: string;
+  ephemeris_version: string;
+  start_time_utc: string;
+  end_time_utc: string;
+  duration_seconds: number;
+  sample_count: number;
+  coverage_start_utc: string;
+  coverage_end_utc: string;
+  samples: OrbitalTrajectorySampleOut[];
+}
 
 export type PublicCodexStatusOut = Schema["PublicCodexStatusOut"];
 export type PublicControllerStatusOut = Schema["PublicControllerStatusOut"];
@@ -204,6 +237,115 @@ export function fetchSimulationSeries(
   qs.set("include_horizon", String(params.include_horizon ?? true));
   return apiFetch<SimulationSeriesOut>(
     `/api/v1/simulations/${encodeURIComponent(simulationId)}/series?${qs.toString()}`,
+    options,
+  );
+}
+
+/**
+ * Fetch the complete simulation time-series without silent truncation across long spans.
+ * Preserves first sample, last sample, and event-refined transition points via pagination,
+ * falling back to bounded stride downsampling + endpoint anchoring only for huge runs.
+ */
+export async function fetchCompleteSimulationSeries(
+  simulationId: string,
+  options?: ApiFetchOptions,
+): Promise<SimulationSeriesOut> {
+  const pageLimit = 2000;
+  const fullPaginationCap = 24000;
+  const firstPage = await fetchSimulationSeries(
+    simulationId,
+    { offset: 0, limit: pageLimit, downsample: 1, include_horizon: true },
+    options,
+  );
+
+  const firstSamples = firstPage.samples ?? [];
+  const totalAvailable = firstPage.total_samples_available ?? firstSamples.length;
+  if (firstSamples.length === 0 || firstSamples.length >= totalAvailable) {
+    return firstPage;
+  }
+
+  const byIndex = new Map<number, SimulationSampleOut>();
+  for (const s of firstSamples) {
+    byIndex.set(s.sample_index, s);
+  }
+
+  let effectiveDownsample = 1;
+
+  if (totalAvailable <= fullPaginationCap) {
+    let offset = firstSamples.length;
+    while (offset < totalAvailable) {
+      const page = await fetchSimulationSeries(
+        simulationId,
+        { offset, limit: pageLimit, downsample: 1, include_horizon: false },
+        options,
+      );
+      const batch = page.samples ?? [];
+      if (batch.length === 0) {
+        break;
+      }
+      for (const s of batch) {
+        byIndex.set(s.sample_index, s);
+      }
+      offset += batch.length;
+    }
+  } else {
+    effectiveDownsample = Math.min(100, Math.max(2, Math.ceil(totalAvailable / 4000)));
+    let dsOffset = 0;
+    while (true) {
+      const page = await fetchSimulationSeries(
+        simulationId,
+        { offset: dsOffset, limit: pageLimit, downsample: effectiveDownsample, include_horizon: false },
+        options,
+      );
+      const batch = page.samples ?? [];
+      if (batch.length === 0) {
+        break;
+      }
+      for (const s of batch) {
+        byIndex.set(s.sample_index, s);
+      }
+      if (batch.length < pageLimit) {
+        break;
+      }
+      dsOffset += batch.length;
+    }
+    const lastPage = await fetchSimulationSeries(
+      simulationId,
+      {
+        offset: Math.max(0, totalAvailable - 1),
+        limit: 1,
+        downsample: 1,
+        include_horizon: false,
+      },
+      options,
+    );
+    for (const s of lastPage.samples ?? []) {
+      byIndex.set(s.sample_index, s);
+    }
+  }
+
+  const merged = Array.from(byIndex.values()).sort((a, b) => a.sample_index - b.sample_index);
+  return {
+    ...firstPage,
+    returned_samples: merged.length,
+    limit: merged.length,
+    downsample_step: effectiveDownsample,
+    samples: merged,
+  };
+}
+
+export function fetchSimulationOrbitalTrajectory(
+  simulationId: string,
+  params: { samples?: number } = {},
+  options?: ApiFetchOptions,
+): Promise<OrbitalTrajectoryOut> {
+  const qs = new URLSearchParams();
+  if (params.samples !== undefined) {
+    qs.set("samples", String(params.samples));
+  }
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<OrbitalTrajectoryOut>(
+    `/api/v1/simulations/${encodeURIComponent(simulationId)}/orbital-trajectory${suffix}`,
     options,
   );
 }

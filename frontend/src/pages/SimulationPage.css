@@ -1,0 +1,196 @@
+/* Scoped styles exclusively for SimulationPage and SimulationOrreryCanvas */
+
+.simulation-grid > * {
+  min-width: 0;
+}
+
+.simulation-grid .glass-panel,
+.simulation-grid select,
+.simulation-grid input,
+.simulation-grid .btn {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .simulation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .simulation-grid .glass-panel {
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .simulation-grid select,
+  .simulation-grid input {
+    width: 100%;
+    text-overflow: ellipsis;
+  }
+}
+
+.sim-orrery-card {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.14));
+  border-radius: var(--radius-md, 14px);
+  background: rgba(5, 8, 16, 0.78);
+}
+
+.sim-orrery-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 13, 24, 0.9);
+}
+
+.sim-scale-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #f5b83d;
+  border: 1px solid rgba(245, 184, 61, 0.45);
+  background: rgba(245, 184, 61, 0.1);
+}
+
+.sim-timestamp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  color: #5ad2e6;
+  border: 1px solid rgba(90, 210, 230, 0.35);
+  background: rgba(90, 210, 230, 0.08);
+}
+
+.sim-dual-viewport-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sim-viewport-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #040710;
+}
+
+.sim-viewport-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  background: rgba(9, 14, 26, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sim-viewport-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #edf2f7;
+}
+
+.sim-viewport-mag {
+  font-size: 0.71rem;
+  color: #a4b2c7;
+}
+
+.sim-canvas-stage {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  min-height: 320px;
+}
+
+.sim-viewport-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  padding: 0.48rem 0.85rem;
+  font-size: 0.72rem;
+  color: #a4b2c7;
+  background: rgba(9, 14, 26, 0.88);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sim-playback-duration-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(90, 210, 230, 0.22);
+  background: rgba(11, 17, 30, 0.62);
+}
+
+.sim-playback-presets-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.sim-preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sim-custom-duration-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+}
+
+.sim-custom-duration-input {
+  width: 140px;
+  max-width: 100%;
+}
+
+.sim-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+
+.sim-fallback-svg-wrap {
+  width: 100%;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .sim-dual-viewport-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-canvas-stage {
+    height: 300px;
+    min-height: 260px;
+  }
+}
+

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.rate_limit import simulation_rate_limiter
 from app.db.session import get_db
 from app.schemas.simulation import (
+    OrbitalTrajectoryOut,
     SimulationCancelOut,
     SimulationCreateIn,
     SimulationCreateOut,
@@ -101,6 +102,30 @@ def get_simulation_series(
         limit=limit,
         downsample_step=downsample,
         include_horizon=include_horizon,
+    )
+
+
+@router.get(
+    "/{simulation_id}/orbital-trajectory",
+    response_model=OrbitalTrajectoryOut,
+    status_code=status.HTTP_200_OK,
+    summary="Get read-only SPICE ECLIPJ2000 Sun-Earth-Moon trajectory and Moon orientation matrix",
+)
+def get_simulation_orbital_trajectory(
+    simulation_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    samples: Annotated[
+        int,
+        Query(
+            ge=64,
+            le=4096,
+            description="Number of evenly sampled SPICE trajectory points across the simulation span",
+        ),
+    ] = 1024,
+) -> dict:
+    """Compute timestamped SPICE inertial Sun-Earth-Moon vectors for an existing simulation run."""
+    return simulation_service.get_simulation_orbital_trajectory_payload(
+        db, simulation_id, samples=samples
     )
 
 

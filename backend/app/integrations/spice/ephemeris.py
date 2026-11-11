@@ -59,6 +59,23 @@ class EphemerisSample:
     subsolar_lon_deg: float
 
 
+@dataclass(frozen=True)
+class InertialOrbitalSample:
+    """Single SPICE ECLIPJ2000 3-body orbital position & Moon orientation sample."""
+
+    timestamp_utc: datetime
+    ephemeris_time: float
+    elapsed_seconds: float
+    earth_wrt_sun_eclipj2000_km: tuple[float, float, float]
+    moon_wrt_earth_eclipj2000_km: tuple[float, float, float]
+    moon_wrt_sun_eclipj2000_km: tuple[float, float, float]
+    moon_me_to_eclipj2000: tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ]
+
+
 def build_observer_state(
     site_id: int,
     latitude_deg: float,
@@ -189,6 +206,82 @@ def get_moon_orientation_matrix(
         mgr.ensure_loaded()
         mat = spice.pxform(from_frame, to_frame, et)
     return [[float(val) for val in row] for row in mat]
+
+
+def compute_inertial_orbital_trajectory(
+    start_time_utc: datetime,
+    end_time_utc: datetime,
+    num_samples: int = 1024,
+    frame: str = "ECLIPJ2000",
+    abcorr: str = "NONE",
+    manager: SpiceKernelManager | None = None,
+) -> tuple[LoadedKernelState, list[InertialOrbitalSample]]:
+    """Compute bounded DE440 inertial Sun-Earth-Moon vectors and Moon orientation over [start, end]."""
+    if num_samples < 64 or num_samples > 4096:
+        raise ValueError("num_samples must be between 64 and 4096.")
+
+    start_utc = (
+        start_time_utc.replace(tzinfo=UTC)
+        if start_time_utc.tzinfo is None
+        else start_time_utc.astimezone(UTC)
+    )
+    end_utc = (
+        end_time_utc.replace(tzinfo=UTC)
+        if end_time_utc.tzinfo is None
+        else end_time_utc.astimezone(UTC)
+    )
+
+    mgr = manager or spice_kernel_manager
+    samples: list[InertialOrbitalSample] = []
+
+    with mgr.lock:
+        start_et, end_et, kernel_state = mgr.validate_utc_interval(start_utc, end_utc)
+        denom = float(num_samples - 1)
+        span_et = end_et - start_et
+
+        for idx in range(num_samples):
+            if idx == 0:
+                et = start_et
+            elif idx == num_samples - 1:
+                et = end_et
+            else:
+                et = start_et + span_et * (float(idx) / denom)
+
+            iso_str = str(spice.et2utc(et, "ISOC", 6))
+            ts_utc = datetime.fromisoformat(iso_str).replace(tzinfo=UTC)
+            elapsed_s = 0.0 if idx == 0 else round((ts_utc - start_utc).total_seconds(), 3)
+
+            earth_sun_arr, _ = spice.spkpos("EARTH", et, frame, abcorr, "SUN")
+            moon_earth_arr, _ = spice.spkpos("MOON", et, frame, abcorr, "EARTH")
+
+            ex = float(earth_sun_arr[0])
+            ey = float(earth_sun_arr[1])
+            ez = float(earth_sun_arr[2])
+
+            mx = float(moon_earth_arr[0])
+            my = float(moon_earth_arr[1])
+            mz = float(moon_earth_arr[2])
+
+            rot_mat = spice.pxform("MOON_ME", frame, et)
+            rot_tuple = (
+                (float(rot_mat[0][0]), float(rot_mat[0][1]), float(rot_mat[0][2])),
+                (float(rot_mat[1][0]), float(rot_mat[1][1]), float(rot_mat[1][2])),
+                (float(rot_mat[2][0]), float(rot_mat[2][1]), float(rot_mat[2][2])),
+            )
+
+            samples.append(
+                InertialOrbitalSample(
+                    timestamp_utc=ts_utc,
+                    ephemeris_time=float(et),
+                    elapsed_seconds=float(elapsed_s),
+                    earth_wrt_sun_eclipj2000_km=(ex, ey, ez),
+                    moon_wrt_earth_eclipj2000_km=(mx, my, mz),
+                    moon_wrt_sun_eclipj2000_km=(ex + mx, ey + my, ez + mz),
+                    moon_me_to_eclipj2000=rot_tuple,
+                )
+            )
+
+    return kernel_state, samples
 
 
 def summarize_kernel_metadata(state: LoadedKernelState) -> dict[str, object]:

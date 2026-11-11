@@ -239,3 +239,39 @@ class AdminSimulationDiagnosticsOut(BaseModel):
     site_dem_coverage: list[AdminSiteCoverageEntry] = Field(default_factory=list)
     cached_horizon_profiles_count: int
     worker_queue_counts: dict[str, int] = Field(default_factory=dict)
+
+
+class OrbitalTrajectorySampleOut(BaseModel):
+    """Timestamped SPICE inertial Sun-Earth-Moon vectors and Moon orientation matrix."""
+
+    timestamp_utc: datetime
+    ephemeris_time: float
+    elapsed_seconds: float
+    earth_wrt_sun_eclipj2000_km: tuple[float, float, float]
+    moon_wrt_earth_eclipj2000_km: tuple[float, float, float]
+    moon_wrt_sun_eclipj2000_km: tuple[float, float, float]
+    moon_me_to_eclipj2000: tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ]
+
+
+class OrbitalTrajectoryOut(BaseModel):
+    """Read-only inertial orbital trajectory and lunar orientation contract for a simulation run."""
+
+    simulation_id: UUID
+    site: SiteSimulationSummaryOut
+    coordinate_frame: str
+    lunar_body_frame: str
+    distance_units: str
+    aberration_policy: str
+    ephemeris_source: str
+    ephemeris_version: str
+    start_time_utc: datetime
+    end_time_utc: datetime
+    duration_seconds: int
+    sample_count: int
+    coverage_start_utc: str
+    coverage_end_utc: str
+    samples: list[OrbitalTrajectorySampleOut] = Field(default_factory=list)

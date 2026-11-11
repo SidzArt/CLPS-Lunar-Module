@@ -7,6 +7,11 @@ Username / User ID: test_viewer
 Password: TestViewerPass123!
 Role: viewer
 
+To RUN:
+./run_clps.sh
 
-./run_clps.sh check || ./run_clps.sh start --backend-port=8005
+To RUN on a different backend port:
+./run_clps.sh start --backend-port=8005
 
+To STOP
+./run_clps.sh stop

@@ -1,11 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   cancelSimulation,
   createSimulation,
+  fetchCompleteSimulationSeries,
   fetchSimulationEvents,
-  fetchSimulationSeries,
+  fetchSimulationOrbitalTrajectory,
   fetchSimulationStatus,
   fetchSites,
   type HorizonCurveOut,
@@ -18,11 +19,21 @@ import { UtilitiesFooter } from "../components/UtilitiesFooter";
 import { HeadTags } from "../seo/HeadTags";
 import { SimulationOrreryCanvas } from "../three/SimulationOrreryCanvas";
 import {
+  ANIMATION_DURATION_PRESETS,
+  computePlaybackRate,
+  DEFAULT_ANIMATION_DURATION_SECONDS,
+  findSampleIndexAtElapsed,
+  formatPlaybackRate,
+  SCIENTIFIC_DURATION_OPTIONS,
+  validateAnimationDurationInput,
+} from "../three/simulationOrbitMath";
+import {
   formatDurationSeconds,
   formatLatLon,
   formatNumber,
   formatUtcTimestamp,
 } from "../utils/formatting";
+import "./SimulationPage.css";
 
 function HorizonSvgChart({
   horizon,
@@ -154,9 +165,12 @@ export function SimulationPage() {
   const [durationSeconds, setDurationSeconds] = useState(259200); // 3 days default (fast compute + clear solar arc)
   const [playbackSpeed, setPlaybackSpeed] = useState(600);
 
-  const [sampleIndex, setSampleIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [visualRate, setVisualRate] = useState(4); // samples per second playback in UI
+  const [rawAnimationDuration, setRawAnimationDuration] = useState(
+    String(DEFAULT_ANIMATION_DURATION_SECONDS),
+  );
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
 
   useEffect(() => {
     if (sites.length > 0 && selectedSiteId === 0) {
@@ -182,12 +196,20 @@ export function SimulationPage() {
 
   const seriesQuery = useQuery({
     queryKey: queryKeys.simulationSeries(simulationId ?? ""),
+    queryFn: () => fetchCompleteSimulationSeries(simulationId ?? ""),
+    enabled: Boolean(simulationId && isReadyForSeries),
+  });
+
+  const trajectorySampleCount =
+    (simStatus?.duration_seconds ?? durationSeconds) > 90 * 86400 ? 2048 : 1024;
+  const trajectoryQuery = useQuery({
+    queryKey: queryKeys.simulationOrbitalTrajectory(
+      simulationId ?? "",
+      trajectorySampleCount,
+    ),
     queryFn: () =>
-      fetchSimulationSeries(simulationId ?? "", {
-        offset: 0,
-        limit: 1000,
-        downsample: 1,
-        include_horizon: true,
+      fetchSimulationOrbitalTrajectory(simulationId ?? "", {
+        samples: trajectorySampleCount,
       }),
     enabled: Boolean(simulationId && isReadyForSeries),
   });
@@ -199,31 +221,97 @@ export function SimulationPage() {
   });
 
   const samples = seriesQuery.data?.samples ?? [];
+  const sampleIndex = useMemo(
+    () => findSampleIndexAtElapsed(samples, elapsedSeconds),
+    [samples, elapsedSeconds],
+  );
   const activeSample =
     samples.length > 0
       ? samples[Math.min(sampleIndex, samples.length - 1)]
       : undefined;
 
+  const effectiveScientificDuration = useMemo(() => {
+    if (simStatus?.duration_seconds && simStatus.duration_seconds > 0) {
+      return simStatus.duration_seconds;
+    }
+    if (trajectoryQuery.data?.duration_seconds && trajectoryQuery.data.duration_seconds > 0) {
+      return trajectoryQuery.data.duration_seconds;
+    }
+    if (samples.length > 1) {
+      return samples[samples.length - 1].elapsed_seconds;
+    }
+    return 0;
+  }, [simStatus?.duration_seconds, trajectoryQuery.data?.duration_seconds, samples]);
+
+  const durationValidation = useMemo(
+    () => validateAnimationDurationInput(rawAnimationDuration),
+    [rawAnimationDuration],
+  );
+  const basePlaybackRate = useMemo(
+    () =>
+      durationValidation.valid && durationValidation.seconds !== null
+        ? computePlaybackRate(effectiveScientificDuration, durationValidation.seconds)
+        : 0,
+    [durationValidation, effectiveScientificDuration],
+  );
+  const effectivePlaybackRate = basePlaybackRate * speedMultiplier;
+
+  const rateRef = useRef(effectivePlaybackRate);
+  rateRef.current = effectivePlaybackRate;
+  const maxDurationRef = useRef(effectiveScientificDuration);
+  maxDurationRef.current = effectiveScientificDuration;
+
+  const activeTimestampUtc = useMemo(() => {
+    const startStr = simStatus?.start_time_utc ?? trajectoryQuery.data?.start_time_utc;
+    if (startStr) {
+      const startMs = Date.parse(startStr);
+      if (Number.isFinite(startMs)) {
+        return new Date(startMs + elapsedSeconds * 1000).toISOString().replace(".000Z", "Z");
+      }
+    }
+    return activeSample?.timestamp_utc;
+  }, [simStatus?.start_time_utc, trajectoryQuery.data?.start_time_utc, elapsedSeconds, activeSample?.timestamp_utc]);
+
   useEffect(() => {
-    setSampleIndex(0);
+    setElapsedSeconds(0);
     setPlaying(false);
   }, [simulationId]);
 
   useEffect(() => {
-    if (!playing || samples.length <= 1) {
+    if (!durationValidation.valid && playing) {
+      setPlaying(false);
+    }
+  }, [durationValidation.valid, playing]);
+
+  useEffect(() => {
+    if (
+      !playing ||
+      !durationValidation.valid ||
+      effectiveScientificDuration <= 0 ||
+      effectivePlaybackRate <= 0
+    ) {
       return;
     }
-    const timer = window.setInterval(() => {
-      setSampleIndex((prev) => {
-        if (prev + 1 >= samples.length) {
+    let rafId = 0;
+    let lastMs = performance.now();
+    const tick = (nowMs: number) => {
+      const dtRealSec = Math.max(0, Math.min(0.25, (nowMs - lastMs) / 1000));
+      lastMs = nowMs;
+      const rate = rateRef.current;
+      const maxDur = maxDurationRef.current;
+      setElapsedSeconds((prev) => {
+        const next = prev + dtRealSec * rate;
+        if (next >= maxDur) {
           setPlaying(false);
-          return prev;
+          return maxDur;
         }
-        return prev + 1;
+        return next;
       });
-    }, Math.max(40, Math.round(1000 / visualRate)));
-    return () => window.clearInterval(timer);
-  }, [playing, samples.length, visualRate]);
+      rafId = window.requestAnimationFrame(tick);
+    };
+    rafId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [playing, durationValidation.valid, effectiveScientificDuration, effectivePlaybackRate]);
 
   const createMutation = useMutation({
     mutationFn: (payload: Parameters<typeof createSimulation>[0]) =>
@@ -388,10 +476,11 @@ export function SimulationPage() {
                     value={durationSeconds}
                     onChange={(event) => setDurationSeconds(Number(event.target.value))}
                   >
-                    <option value={86400}>24 Hours (86,400 s)</option>
-                    <option value={259200}>3 Days (259,200 s)</option>
-                    <option value={604800}>7 Days (604,800 s)</option>
-                    <option value={2592000}>30 Days (2,592,000 s)</option>
+                    {SCIENTIFIC_DURATION_OPTIONS.map((opt) => (
+                      <option key={opt.seconds} value={opt.seconds}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -570,37 +659,119 @@ export function SimulationPage() {
               <>
                 <SimulationOrreryCanvas
                   series={seriesQuery.data}
+                  trajectory={trajectoryQuery.data ?? null}
                   sampleIndex={sampleIndex}
-                  interpolationAlpha={0}
+                  elapsedSeconds={elapsedSeconds}
+                  isPlaying={playing}
+                  activeTimestampUtc={activeTimestampUtc}
                 />
 
-                {/* Timeline Playback Scrubber */}
+                {/* Timeline Playback Scrubber & Animation Playback Duration Control */}
                 <div className="glass-panel" style={{ padding: "0.95rem 1.1rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "0.65rem",
-                      marginBottom: "0.65rem",
-                    }}
-                  >
+                  <div className="sim-playback-duration-panel">
+                    <div className="sim-playback-presets-row">
+                      <div>
+                        <span className="eyebrow" style={{ display: "block" }}>
+                          Animation Playback Duration
+                        </span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                          Real-world playback length (does not alter SPICE physics)
+                        </span>
+                      </div>
+                      <div className="sim-preset-buttons" role="group" aria-label="Animation Playback Duration presets">
+                        {ANIMATION_DURATION_PRESETS.map((preset) => {
+                          const isSelected =
+                            durationValidation.valid &&
+                            durationValidation.seconds === preset.seconds;
+                          return (
+                            <button
+                              key={preset.seconds}
+                              type="button"
+                              className={`btn ${isSelected ? "btn-cyan" : ""}`}
+                              style={{ padding: "0.28rem 0.62rem", fontSize: "0.76rem" }}
+                              aria-pressed={isSelected}
+                              onClick={() => setRawAnimationDuration(String(preset.seconds))}
+                            >
+                              {preset.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="sim-custom-duration-row">
+                      <label htmlFor="custom-animation-duration" className="field-label" style={{ margin: 0 }}>
+                        Custom animation duration (seconds)
+                      </label>
+                      <input
+                        id="custom-animation-duration"
+                        type="text"
+                        inputMode="numeric"
+                        aria-label="Custom animation duration (seconds)"
+                        aria-invalid={!durationValidation.valid}
+                        className="input mono sim-custom-duration-input"
+                        value={rawAnimationDuration}
+                        onChange={(event) => setRawAnimationDuration(event.target.value)}
+                        placeholder="5 - 3600"
+                      />
+                      <span className="mono" style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }} data-testid="playback-rate-readout">
+                        Playback rate (D / A):{" "}
+                        {durationValidation.valid && durationValidation.seconds !== null
+                          ? formatPlaybackRate(effectivePlaybackRate)
+                          : "Invalid duration"}
+                      </span>
+                    </div>
+
+                    {!durationValidation.valid && durationValidation.error && (
+                      <div className="notice-banner error" role="alert" style={{ margin: 0 }}>
+                        <span>{durationValidation.error}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="sim-controls-row">
                     <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
                       <button
                         type="button"
                         className="btn btn-primary"
-                        onClick={() => setPlaying((p) => !p)}
+                        disabled={!durationValidation.valid || effectiveScientificDuration <= 0}
+                        onClick={() => {
+                          if (!durationValidation.valid) {
+                            return;
+                          }
+                          if (!playing && elapsedSeconds >= effectiveScientificDuration) {
+                            setElapsedSeconds(0);
+                          }
+                          setPlaying((p) => !p);
+                        }}
                       >
                         {playing ? <PauseIcon /> : <PlayIcon />}
-                        <span>{playing ? "Pause" : "Play"}</span>
+                        <span>
+                          {playing
+                            ? "Pause"
+                            : elapsedSeconds > 0 && elapsedSeconds < effectiveScientificDuration
+                              ? "Resume"
+                              : "Play"}
+                        </span>
                       </button>
                       <button
                         type="button"
                         className="btn"
                         onClick={() => {
                           setPlaying(false);
-                          setSampleIndex((i) => Math.max(0, i - 1));
+                          setElapsedSeconds(0);
+                        }}
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={samples.length <= 1}
+                        onClick={() => {
+                          setPlaying(false);
+                          const targetIdx = Math.max(0, sampleIndex - 1);
+                          setElapsedSeconds(samples[targetIdx]?.elapsed_seconds ?? 0);
                         }}
                       >
                         Step -1
@@ -608,9 +779,11 @@ export function SimulationPage() {
                       <button
                         type="button"
                         className="btn"
+                        disabled={samples.length <= 1}
                         onClick={() => {
                           setPlaying(false);
-                          setSampleIndex((i) => Math.min(samples.length - 1, i + 1));
+                          const targetIdx = Math.min(samples.length - 1, sampleIndex + 1);
+                          setElapsedSeconds(samples[targetIdx]?.elapsed_seconds ?? 0);
                         }}
                       >
                         Step +1
@@ -618,16 +791,17 @@ export function SimulationPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.35rem", alignItems: "center" }}>
-                      <span className="eyebrow">UI Rate:</span>
-                      {[2, 4, 12].map((rate) => (
+                      <span className="eyebrow">Speed Trim:</span>
+                      {[0.5, 1, 2].map((mult) => (
                         <button
-                          key={rate}
+                          key={mult}
                           type="button"
-                          className={`btn ${visualRate === rate ? "btn-cyan" : ""}`}
+                          className={`btn ${speedMultiplier === mult ? "btn-cyan" : ""}`}
                           style={{ padding: "0.28rem 0.6rem", fontSize: "0.76rem" }}
-                          onClick={() => setVisualRate(rate)}
+                          aria-pressed={speedMultiplier === mult}
+                          onClick={() => setSpeedMultiplier(mult)}
                         >
-                          {rate} steps/s
+                          {mult}x
                         </button>
                       ))}
                     </div>
@@ -644,7 +818,8 @@ export function SimulationPage() {
                     value={sampleIndex}
                     onChange={(event) => {
                       setPlaying(false);
-                      setSampleIndex(Number(event.target.value));
+                      const targetIdx = Number(event.target.value);
+                      setElapsedSeconds(samples[targetIdx]?.elapsed_seconds ?? 0);
                     }}
                     style={{ width: "100%" }}
                   />
@@ -662,7 +837,7 @@ export function SimulationPage() {
                       Sample {sampleIndex + 1} / {samples.length}
                     </span>
                     <span>
-                      Elapsed: {formatDurationSeconds(activeSample?.elapsed_seconds)}
+                      Elapsed: {formatDurationSeconds(Math.round(elapsedSeconds))}
                     </span>
                   </div>
                 </div>

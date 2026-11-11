@@ -10,6 +10,8 @@ export const queryKeys = {
   compareProfiles: () => ["compare", "profiles"] as const,
   simulationStatus: (id: string) => ["simulation", id, "status"] as const,
   simulationSeries: (id: string) => ["simulation", id, "series"] as const,
+  simulationOrbitalTrajectory: (id: string, samples = 1024) =>
+    ["simulation", id, "orbital-trajectory", samples] as const,
   simulationEvents: (id: string) => ["simulation", id, "events"] as const,
   codexStatus: () => ["codex", "status"] as const,
   adminMe: () => ["admin", "me"] as const,

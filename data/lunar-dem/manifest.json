@@ -1,0 +1,72 @@
+{
+  "manifest_version": "1.0.0-pgda-lola-2023",
+  "source_archive": "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/",
+  "lunar_datum": "Spherical lunar reference R = 1,737,400.0 m; MOON_ME (DE421-aligned)",
+  "generated_utc": "2026-11-11T04:35:23.433510+00:00",
+  "assets": [
+    {
+      "asset_id": "LDEM_80S_80MPP_ADJ",
+      "filename": "LDEM_80S_80MPP_ADJ.TIF",
+      "sha256": "82030dcbdd7c4bb0c7d858e9b4b293b9f2cda5a543ba31ec0f42784bd6beee5a",
+      "size_bytes": 189158392,
+      "elevation_unit": "meters",
+      "lunar_frame": "MOON_ME_DE421",
+      "source": "NASA GSFC Planetary Geodynamics Data Archive (PGDA) LOLA 80S 80 m/px Adjusted DEM",
+      "citation": "Barker, M. K., Mazarico, E., Neumann, G. A., et al. (2021, 2023), Planetary & Space Science / NASA PGDA",
+      "dataset_version": "PGDA-LOLA-2023-80S-80MPP",
+      "count_filename": "LDEC_80S_80MPP_ADJ.TIF",
+      "error_filename": "LDEM_80S_80MPP_ADJ_ERR.TIF"
+    },
+    {
+      "asset_id": "LDEM_60S_240MPP_ADJ",
+      "filename": "LDEM_60S_240MPP_ADJ.TIF",
+      "sha256": "3f9663257b63022f2b0d5a623482ff3cadddceb91594a4e4ca14a94d8cec8b34",
+      "size_bytes": 218961039,
+      "elevation_unit": "meters",
+      "lunar_frame": "MOON_ME_DE421",
+      "source": "NASA GSFC Planetary Geodynamics Data Archive (PGDA) LOLA 60S 240 m/px Adjusted DEM",
+      "citation": "Barker, M. K., Mazarico, E., Neumann, G. A., et al. (2021, 2023), Planetary & Space Science / NASA PGDA",
+      "dataset_version": "PGDA-LOLA-2023-60S-240MPP"
+    }
+  ],
+  "companion_files": {
+    "LDEC_80S_80MPP_ADJ.TIF": {
+      "sha256": "7ce73ea46243e7119076cf7bb4ed1d5536328431607fc1f7988d63ef7607cdd8",
+      "size_bytes": 115657642,
+      "width": 7600,
+      "height": 7600,
+      "res": [
+        80.0,
+        80.0
+      ],
+      "dtype": "float32",
+      "nodata": null,
+      "area_or_point": "Area",
+      "bounds_m": [
+        -304000.0,
+        -304000.0,
+        304000.0,
+        304000.0
+      ]
+    },
+    "LDEM_80S_80MPP_ADJ_ERR.TIF": {
+      "sha256": "e89306914bb209143f61ba66d341703d75221339424b774c6a1eb3c6c370ffc6",
+      "size_bytes": 254808965,
+      "width": 7600,
+      "height": 7600,
+      "res": [
+        80.0,
+        80.0
+      ],
+      "dtype": "float32",
+      "nodata": null,
+      "area_or_point": "Area",
+      "bounds_m": [
+        -304000.0,
+        -304000.0,
+        304000.0,
+        304000.0
+      ]
+    }
+  }
+}

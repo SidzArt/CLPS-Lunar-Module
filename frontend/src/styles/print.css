@@ -1,0 +1,43 @@
+@media print {
+  :root {
+    --bg-space: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-glass: #ffffff;
+    --bg-glass-strong: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #222222;
+    --text-muted: #444444;
+    --border-subtle: #cccccc;
+    --border-strong: #999999;
+  }
+
+  body,
+  html,
+  #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .ambient-bg-layer,
+  .site-header .header-actions,
+  .utilities-footer,
+  .scroll-progress-bar,
+  .no-print {
+    display: none !important;
+  }
+
+  .glass-panel,
+  .glass-panel-strong {
+    background: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .data-table th,
+  .data-table td {
+    border-color: #cccccc !important;
+    color: #000000 !important;
+  }
+}
+

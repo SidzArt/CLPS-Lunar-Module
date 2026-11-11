@@ -1,0 +1,75 @@
+:root {
+  --bg-space: #05070b;
+  --bg-elevated: #0a0f18;
+  --bg-glass: rgba(11, 16, 24, 0.72);
+  --bg-glass-strong: rgba(13, 19, 29, 0.88);
+  --bg-glass-subtle: rgba(16, 22, 34, 0.52);
+
+  --text-primary: #edf2f7;
+  --text-secondary: #a8b3c7;
+  --text-muted: #7c899e;
+
+  --accent-amber: #f5b83d;
+  --accent-amber-soft: rgba(245, 184, 61, 0.16);
+  --accent-amber-border: rgba(245, 184, 61, 0.56);
+
+  --accent-cyan: #5ad2e6;
+  --accent-cyan-soft: rgba(90, 210, 230, 0.14);
+  --accent-cyan-border: rgba(90, 210, 230, 0.45);
+
+  --status-ok: #46d18a;
+  --status-warn: #f5b83d;
+  --status-error: #f16d6d;
+
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.24);
+
+  --shadow-glass: 0 18px 42px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 2px #05070b, 0 0 0 4px #f5b83d;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  --z-moon-bg: 0;
+  --z-content: 10;
+  --z-floating: 20;
+  --z-header: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+}
+
+html[data-theme="light"] {
+  --bg-space: #eef2f7;
+  --bg-elevated: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-glass-strong: rgba(255, 255, 255, 0.96);
+  --bg-glass-subtle: rgba(245, 248, 252, 0.78);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #526277;
+
+  --accent-amber: #b46900;
+  --accent-amber-soft: rgba(180, 105, 0, 0.12);
+  --accent-amber-border: rgba(180, 105, 0, 0.55);
+
+  --accent-cyan: #0e7490;
+  --accent-cyan-soft: rgba(14, 116, 144, 0.12);
+  --accent-cyan-border: rgba(14, 116, 144, 0.48);
+
+  --status-ok: #15803d;
+  --status-warn: #b45309;
+  --status-error: #b91c1c;
+
+  --border-subtle: rgba(15, 23, 42, 0.14);
+  --border-strong: rgba(15, 23, 42, 0.28);
+
+  --shadow-glass: 0 12px 28px rgba(15, 23, 42, 0.12);
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #b46900;
+}
+

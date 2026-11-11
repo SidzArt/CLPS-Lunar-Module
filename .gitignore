@@ -1,0 +1,42 @@
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local secrets & environment configuration
+.env
+backend/.env
+firmware/**/secrets.h
+firmware/**/config.h
+
+# Local uploaded/generated media storage
+storage/
+
+# Large binary NASA SPICE kernels and LOLA DEM GeoTIFFs (manifests remain tracked)
+data/spice-kernels/*.bsp
+data/spice-kernels/*.bpc
+data/spice-kernels/*.tls
+data/spice-kernels/*.tpc
+data/spice-kernels/*.tf
+data/lunar-dem/*.tif
+data/lunar-dem/*.TIF
+data/lunar-dem/*.grd
+data/lunar-dem/*.xyzi
+data/lunar-dem/*.tgz
+
+# Frontend dependencies and build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/playwright-report/
+frontend/test-results/
+
+# macOS OS files
+.DS_Store
+

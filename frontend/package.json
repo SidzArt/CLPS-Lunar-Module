@@ -1,0 +1,44 @@
+{
+  "name": "clps-luna-browser-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server/ssr-server.mjs",
+    "dev:vite": "vite",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build --outDir dist/client --ssrManifest",
+    "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
+    "preview": "NODE_ENV=production node server/ssr-server.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "generate:api-types": "npx openapi-typescript http://127.0.0.1:8000/api/v1/openapi.json -o src/api/generated/schema.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.0",
+    "@react-three/fiber": "^9.1.2",
+    "@tanstack/react-query": "^5.90.0",
+    "express": "^5.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.0",
+    "three": "^0.175.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/express": "^5.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/three": "^0.175.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "jsdom": "^28.1.0",
+    "openapi-typescript": "^7.10.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.0"
+  }
+}
+

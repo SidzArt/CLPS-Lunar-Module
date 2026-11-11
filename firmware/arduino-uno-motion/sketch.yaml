@@ -1,0 +1,9 @@
+default_fqbn: arduino:avr:uno
+profiles:
+  codex_motion_uno:
+    fqbn: arduino:avr:uno
+    platforms:
+      - platform: arduino:avr (1.8.6)
+    libraries:
+      - AccelStepper (1.64.0)
+

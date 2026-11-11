@@ -1,0 +1,22 @@
+{
+  "title": "NASA SVS CGI Moon Kit — LROC WAC Color Mosaic & LOLA Global Elevation",
+  "creator": "NASA's Scientific Visualization Studio (Ernie Wright) / LROC / LOLA Science Teams",
+  "source_url": "https://svs.gsfc.nasa.gov/4720",
+  "license": "Public Domain (NASA GSFC / U.S. Government Work)",
+  "files": [
+    {
+      "filename": "moon_albedo_2k.webp",
+      "derived_from": "lroc_color_poles_2k.tif",
+      "projection": "Simple Cylindrical Equirectangular (0 deg Prime Meridian centered)",
+      "credit": "NASA / GSFC / Arizona State University (LROC)"
+    },
+    {
+      "filename": "moon_bump_2k.webp",
+      "derived_from": "ldem_4.tif",
+      "projection": "Simple Cylindrical Equirectangular (0 deg Prime Meridian centered)",
+      "credit": "NASA / GSFC / LOLA Science Team"
+    }
+  ],
+  "disclaimer": "Authentic NASA imagery included strictly for visual globe mapping. Not an official NASA mission operations portal or endorsement."
+}
+

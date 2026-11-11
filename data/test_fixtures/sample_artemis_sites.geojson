@@ -1,0 +1,48 @@
+{
+  "type": "FeatureCollection",
+  "name": "NASA_Artemis_Candidate_Sites",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-36.20, -84.90, 5100]
+      },
+      "properties": {
+        "site_code": "GEO-MOUT-01",
+        "site_name": "Mons Mouton Plateau",
+        "terrain_type": "Highland Plateau",
+        "overview_summary": "Extensive elevated plateau near South Pole with high scientific interest.",
+        "catalogue_status": "verified"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.80, -85.40, 3200]
+      },
+      "properties": {
+        "site_code": "GEO-NOB2-01",
+        "site_name": "Nobile Crater Point 2",
+        "terrain_type": "Crater Rim Flank",
+        "overview_summary": "Secondary candidate vantage point near VIPER prospecting terrain.",
+        "catalogue_status": "verified"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-15.40, -87.80, -1900]
+      },
+      "properties": {
+        "site_code": "GEO-HAW2-01",
+        "site_name": "Haworth Ridge Point 2",
+        "terrain_type": "Permanently Shadowed Rim",
+        "overview_summary": "Topographic vantage overlooking shadowed crater interior.",
+        "catalogue_status": "verified"
+      }
+    }
+  ]
+}

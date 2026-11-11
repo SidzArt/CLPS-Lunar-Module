@@ -1,0 +1,9 @@
+default_fqbn: esp32:esp32:esp32
+profiles:
+  codex_bridge:
+    fqbn: esp32:esp32:esp32
+    platforms:
+      - platform: esp32:esp32 (3.0.7)
+    libraries:
+      - ArduinoJson (7.2.0)
+

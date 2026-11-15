@@ -8,12 +8,12 @@
     <strong>📊 Presentation:</strong>
     <a href="https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/CLPS_Luna_Browser.pdf"><strong>View in GitHub</strong></a>
     &nbsp;•&nbsp;
-    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/CLPS_Luna_Browser.pdf"><strong>Direct PDF / Download</strong></a>
+    <a href="https://drive.google.com/file/d/1MlSr--QFZDucx_buuiSCgR9ZnE70mANq/view?usp=sharing"><strong>Direct PDF / Download</strong></a>
     &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
     <strong>📄 Documentation:</strong>
     <a href="https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/Report.pdf"><strong>View in GitHub</strong></a>
     &nbsp;•&nbsp;
-    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/Report.pdf"><strong>Direct PDF / Download</strong></a>
+    <a href="https://drive.google.com/file/d/1n_NYg4LGkDMiyQO1JD48y9mleXAieac6/view?usp=sharing"><strong>Direct PDF / Download</strong></a>
   </p>
 
   <p>
@@ -34,8 +34,8 @@
 
 | Document | Format | GitHub Repo Viewer | Direct PDF (Open in Browser) |
 | :--- | :--- | :--- | :--- |
-| 📊 **CLPS Luna Browser Presentation** | PDF Slides | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/CLPS_Luna_Browser.pdf) | [Direct View / Download](https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/CLPS_Luna_Browser.pdf) |
-| 📄 **Final Technical Project Report** | PDF Report | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/Report.pdf) | [Direct View / Download](https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/Report.pdf) |
+| 📊 **CLPS Luna Browser Presentation** | PDF Slides | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/CLPS_Luna_Browser.pdf) | [Google Drive / Download](https://drive.google.com/file/d/1MlSr--QFZDucx_buuiSCgR9ZnE70mANq/view?usp=sharing) |
+| 📄 **Final Technical Project Report** | PDF Report | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/Report.pdf) | [Google Drive / Download](https://drive.google.com/file/d/1n_NYg4LGkDMiyQO1JD48y9mleXAieac6/view?usp=sharing) |
 
 ---
 

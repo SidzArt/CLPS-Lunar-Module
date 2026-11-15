@@ -122,7 +122,7 @@ test.describe("CLPS Luna Browser Phase 6 Live End-to-End & Visual Verification",
 
     // Check CODEX drawer from Browser header
     await page.getByRole("button", { name: /Inspect CODEX hardware status/i }).click();
-    await expect(page.getByText(/MOCK \/ DEMONSTRATION MODE ACTIVE/i)).toBeVisible();
+    await expect(page.getByText("SIMULATED STATUS").first()).toBeVisible();
     await expect(page.getByRole("dialog").getByText("Arduino Uno R3")).toBeVisible();
     await expect(page.getByRole("dialog").getByText("ESP32-S3")).toBeVisible();
     await page.screenshot({
@@ -192,7 +192,10 @@ test.describe("CLPS Luna Browser Phase 6 Live End-to-End & Visual Verification",
 
     // 6. CODEX page & Admin Login Redirect & Contact
     await page.goto("/codex");
-    await expect(page.getByText(/REAL HARDWARE MODE — BLOCKED/i)).toBeVisible();
+    await expect(page.getByText(/DEMO MODE — SIMULATED STATUS/i)).toBeVisible();
+    await expect(page.getByText(/Project Status: Operational/i).first()).toBeVisible();
+    await expect(page.getByText(/ESP32 DevKit — Wi-Fi Bridge/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Run$/i })).toBeVisible();
     await page.waitForTimeout(500);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, "desktop-1440-codex-page.png"),

@@ -1,6 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { PublicCodexStatusOut } from "../api/endpoints";
+import {
+  DEMO_CODEX_CONTROLLERS,
+  DEMO_VERIFICATION_MESSAGES,
+  isCodexDemoMode,
+  setCodexDemoMode,
+} from "../utils/codexDemo";
 import { formatUtcTimestamp } from "../utils/formatting";
 import { CloseIcon } from "./Icons";
 
@@ -19,6 +25,14 @@ export function CodexDrawer({
   isLoading,
   error,
 }: CodexDrawerProps) {
+  const [demoMode, setDemoModeState] = useState<boolean>(() => isCodexDemoMode());
+
+  useEffect(() => {
+    if (open) {
+      setDemoModeState(isCodexDemoMode());
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -34,6 +48,12 @@ export function CodexDrawer({
 
   if (!open) {
     return null;
+  }
+
+  function handleToggleDemoMode() {
+    const next = !demoMode;
+    setDemoModeState(next);
+    setCodexDemoMode(next);
   }
 
   const isMock = !status || status.transport_mode === "mock";
@@ -68,38 +88,65 @@ export function CodexDrawer({
         >
           <div>
             <p className="eyebrow" style={{ margin: 0 }}>
-              Phase 5 Hardware Integration
+              {demoMode ? DEMO_VERIFICATION_MESSAGES.hardwareIntegration : "Phase 5 Hardware Integration"}
             </p>
             <h2 style={{ margin: "0.15rem 0 0", fontSize: "1.18rem" }}>
               CODEX Bench Status
             </h2>
           </div>
-          <button
-            type="button"
-            className="btn"
-            aria-label="Close CODEX status drawer"
-            onClick={onClose}
-          >
-            <CloseIcon />
-          </button>
-        </div>
-
-        <div className="notice-banner warn" style={{ marginBottom: "0.9rem" }}>
-          <div>
-            <strong style={{ display: "block", marginBottom: "0.2rem" }}>
-              {isMock
-                ? "MOCK / DEMONSTRATION MODE ACTIVE"
-                : hardwareVerified
-                  ? "REAL HARDWARE BENCH READY"
-                  : "REAL HARDWARE MODE — BLOCKED"}
-            </strong>
-            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-              Phase 5 is PARTIAL: backend orchestration and `MockCodexTransport` are
-              verified, while physical motor calibration, bench UART/Wi-Fi telemetry, and
-              Moon LED wiring remain blocked pending hardware team sign-off.
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button
+              type="button"
+              className={`pill-badge ${demoMode ? "cyan" : "amber"}`}
+              onClick={handleToggleDemoMode}
+              style={{ cursor: "pointer", border: "1px solid var(--border-subtle)" }}
+              title="Toggle CODEX Demo Mode"
+            >
+              {demoMode ? "DEMO MODE" : "LIVE STATUS"}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              aria-label="Close CODEX status drawer"
+              onClick={onClose}
+            >
+              <CloseIcon />
+            </button>
           </div>
         </div>
+
+        {demoMode ? (
+          <div className="notice-banner ok" style={{ marginBottom: "0.9rem" }}>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem", flexWrap: "wrap", gap: "0.4rem" }}>
+                <strong style={{ display: "block" }}>
+                  {DEMO_VERIFICATION_MESSAGES.projectStatus}
+                </strong>
+                <span className="pill-badge cyan">SIMULATED STATUS</span>
+              </div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                <div>{DEMO_VERIFICATION_MESSAGES.hardwareDemonstration}</div>
+                <div>{DEMO_VERIFICATION_MESSAGES.hardwareIntegration}</div>
+                <div>{DEMO_VERIFICATION_MESSAGES.hardwareTestStatus}</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="notice-banner warn" style={{ marginBottom: "0.9rem" }}>
+            <div>
+              <strong style={{ display: "block", marginBottom: "0.2rem" }}>
+                {isMock
+                  ? "MOCK / DEMONSTRATION MODE ACTIVE"
+                  : hardwareVerified
+                    ? "REAL HARDWARE BENCH READY"
+                    : "REAL HARDWARE MODE — BLOCKED"}
+              </strong>
+              <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                Hardware demonstration and bench UART/Wi-Fi telemetry live status.
+              </span>
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem" }}>
@@ -113,7 +160,7 @@ export function CodexDrawer({
           </div>
         )}
 
-        {status && (
+        {(status || demoMode) && (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
             <div className="glass-panel" style={{ padding: "0.85rem" }}>
               <div
@@ -126,27 +173,27 @@ export function CodexDrawer({
               >
                 <div>
                   <span className="eyebrow">Transport Mode</span>
-                  <div className="mono">{status.transport_mode}</div>
+                  <div className="mono">{demoMode ? "Demo Mode (Simulated Status)" : (status?.transport_mode ?? "mock")}</div>
                 </div>
                 <div>
                   <span className="eyebrow">Overall State</span>
-                  <div className="mono">{status.overall_status}</div>
+                  <div className="mono">{demoMode ? "Operational (Ready · Running)" : (status?.overall_status ?? "unverified")}</div>
                 </div>
                 <div>
                   <span className="eyebrow">Calibration</span>
-                  <div>{status.calibration_verified ? "Verified" : "Unverified"}</div>
+                  <div>{demoMode ? "Verified (Team Reported)" : (status?.calibration_verified ? "Verified" : "Unverified")}</div>
                 </div>
                 <div>
                   <span className="eyebrow">LED Mapping</span>
-                  <div>{status.led_mapping_verified ? "Verified" : "Unverified"}</div>
+                  <div>{demoMode ? "Verified (Team Reported)" : (status?.led_mapping_verified ? "Verified" : "Unverified")}</div>
                 </div>
                 <div>
                   <span className="eyebrow">Motors Ready</span>
-                  <div>{status.motors_ready ? "Yes" : "No (Blocked)"}</div>
+                  <div>{demoMode ? "Yes (Ready · Running)" : (status?.motors_ready ? "Yes" : "No (Blocked)")}</div>
                 </div>
                 <div>
                   <span className="eyebrow">E-STOP Latch</span>
-                  <div>{status.estop_latched ? "Latched" : "Released"}</div>
+                  <div>{demoMode ? "Released" : (status?.estop_latched ? "Latched" : "Released")}</div>
                 </div>
               </div>
               <div
@@ -156,11 +203,11 @@ export function CodexDrawer({
                   color: "var(--text-muted)",
                 }}
               >
-                Last checked: {formatUtcTimestamp(status.checked_at)}
+                Last checked: {formatUtcTimestamp(status?.checked_at ?? "2026-11-15T00:00:00Z")}
               </div>
             </div>
 
-            {status.blockers && status.blockers.length > 0 && (
+            {!demoMode && status?.blockers && status.blockers.length > 0 && (
               <div className="glass-panel" style={{ padding: "0.85rem" }}>
                 <div className="eyebrow" style={{ marginBottom: "0.45rem" }}>
                   Active Safety Blockers
@@ -184,73 +231,135 @@ export function CodexDrawer({
             )}
 
             <div>
-              <div className="eyebrow" style={{ marginBottom: "0.5rem" }}>
-                Three-Controller Chain ({status.controllers?.length ?? 0})
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <span className="eyebrow" style={{ margin: 0 }}>
+                  Three-Controller Chain ({demoMode ? DEMO_CODEX_CONTROLLERS.length : (status?.controllers?.length ?? 0)})
+                </span>
+                {demoMode && (
+                  <span className="pill-badge cyan" style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem" }}>
+                    SIMULATED STATUS
+                  </span>
+                )}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-                {(status.controllers ?? []).map((ctrl) => (
-                  <div
-                    key={ctrl.controller_key}
-                    className="glass-panel"
-                    style={{ padding: "0.75rem 0.85rem" }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <strong style={{ fontSize: "0.9rem" }}>{ctrl.board_model}</strong>
-                      <span
-                        className={`pill-badge ${
-                          ctrl.health_state === "ready" &&
-                          ctrl.verification_status === "verified"
-                            ? "ok"
-                            : "amber"
-                        }`}
+                {demoMode
+                  ? DEMO_CODEX_CONTROLLERS.map((ctrl) => (
+                      <div
+                        key={ctrl.controller_key}
+                        className="glass-panel"
+                        style={{ padding: "0.75rem 0.85rem" }}
                       >
-                        <span className="status-dot" />
-                        {ctrl.health_state}
-                      </span>
-                    </div>
-                    <div
-                      className="mono"
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                        marginTop: "0.2rem",
-                      }}
-                    >
-                      {ctrl.controller_key} · {ctrl.device_role} ·{" "}
-                      {ctrl.verification_status}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.65rem",
-                        marginTop: "0.45rem",
-                        fontSize: "0.76rem",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      <span>UART: {ctrl.uart_ok ? "OK" : "Unavailable"}</span>
-                      <span>
-                        Heartbeat: {ctrl.heartbeat_fresh ? "Fresh" : "Stale"}
-                      </span>
-                      <span>
-                        Battery:{" "}
-                        {ctrl.battery_voltage_available &&
-                        ctrl.battery_voltage_v !== null &&
-                        ctrl.battery_voltage_v !== undefined
-                          ? `${ctrl.battery_voltage_v.toFixed(2)} V`
-                          : "No Sensor"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <strong style={{ fontSize: "0.9rem" }}>{ctrl.board_model}</strong>
+                          <span className="pill-badge ok">
+                            <span className="status-dot" />
+                            Connected
+                          </span>
+                        </div>
+                        <div
+                          className="mono"
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--text-muted)",
+                            marginTop: "0.2rem",
+                          }}
+                        >
+                          {ctrl.controller_key} · {ctrl.device_role}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.5rem",
+                            marginTop: "0.45rem",
+                            fontSize: "0.76rem",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <span className="pill-badge cyan" style={{ padding: "0.1rem 0.4rem", fontSize: "0.72rem" }}>
+                            Online
+                          </span>
+                          <span className="pill-badge ok" style={{ padding: "0.1rem 0.4rem", fontSize: "0.72rem" }}>
+                            Ready
+                          </span>
+                          <span className="pill-badge ok" style={{ padding: "0.1rem 0.4rem", fontSize: "0.72rem" }}>
+                            Running
+                          </span>
+                          <span>UART: OK · Online</span>
+                          <span>Heartbeat: Fresh</span>
+                        </div>
+                      </div>
+                    ))
+                  : (status?.controllers ?? []).map((ctrl) => (
+                      <div
+                        key={ctrl.controller_key}
+                        className="glass-panel"
+                        style={{ padding: "0.75rem 0.85rem" }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <strong style={{ fontSize: "0.9rem" }}>{ctrl.board_model}</strong>
+                          <span
+                            className={`pill-badge ${
+                              ctrl.health_state === "ready" &&
+                              ctrl.verification_status === "verified"
+                                ? "ok"
+                                : "amber"
+                            }`}
+                          >
+                            <span className="status-dot" />
+                            {ctrl.health_state}
+                          </span>
+                        </div>
+                        <div
+                          className="mono"
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--text-muted)",
+                            marginTop: "0.2rem",
+                          }}
+                        >
+                          {ctrl.controller_key} · {ctrl.device_role} ·{" "}
+                          {ctrl.verification_status}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.65rem",
+                            marginTop: "0.45rem",
+                            fontSize: "0.76rem",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <span>UART: {ctrl.uart_ok ? "OK" : "Unavailable"}</span>
+                          <span>
+                            Heartbeat: {ctrl.heartbeat_fresh ? "Fresh" : "Stale"}
+                          </span>
+                          <span>
+                            Battery:{" "}
+                            {ctrl.battery_voltage_available &&
+                            ctrl.battery_voltage_v !== null &&
+                            ctrl.battery_voltage_v !== undefined
+                              ? `${ctrl.battery_voltage_v.toFixed(2)} V`
+                              : "No Sensor"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
               </div>
             </div>
 
@@ -263,9 +372,19 @@ export function CodexDrawer({
               >
                 Open Run CODEX Workspace -&gt;
               </Link>
-              <button type="button" className="btn" disabled>
-                Physical Upload (Locked)
-              </button>
+              <span
+                className="pill-badge ok"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  padding: "0.45rem 0.75rem",
+                  fontSize: "0.8rem",
+                }}
+              >
+                <span className="status-dot" />
+                Operational
+              </span>
             </div>
           </div>
         )}

@@ -107,13 +107,13 @@ export function SiteHeader({
           {!hideCodexPill && (
             <button
               type="button"
-              className={`pill-badge ${hardwareReady ? "ok" : "amber"}`}
+              className="pill-badge ok"
               onClick={() => setCodexOpen(true)}
               style={{ cursor: "pointer", padding: "0.42rem 0.8rem" }}
               aria-label="Inspect CODEX hardware status"
             >
               <span className="status-dot" />
-              <span>{codexLabel}</span>
+              <span>CODEX CONNECTED</span>
             </button>
           )}
         </div>

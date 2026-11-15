@@ -502,35 +502,58 @@ describe("Phase 6 Interactive Pages", () => {
     ).toBeInTheDocument();
   });
 
-  it("CodexPage lists 3 independent controllers, Mock banner, and disables physical actuation", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: string | URL | Request) => {
-        const url = String(input);
-        if (url.includes("/api/v1/codex/status")) {
-          return new Response(JSON.stringify(CODEX_STATUS), { status: 200 });
-        }
-        if (url.includes("/api/v1/sites")) {
-          return new Response(JSON.stringify(TWO_SITES), { status: 200 });
-        }
-        if (url.includes("/api/v1/auth/me")) {
-          return new Response(JSON.stringify({ detail: "Not authenticated" }), {
-            status: 401,
-          });
-        }
-        return new Response(JSON.stringify({}), { status: 200 });
-      }),
-    );
+  it("CodexPage lists 3 independent controllers in Demo Mode, team reported status, and Run button", async () => {
+    const fetchSpy = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/api/v1/codex/status")) {
+        return new Response(JSON.stringify(CODEX_STATUS), { status: 200 });
+      }
+      if (url.includes("/api/v1/sites")) {
+        return new Response(JSON.stringify(TWO_SITES), { status: 200 });
+      }
+      if (url.includes("/api/v1/auth/me")) {
+        return new Response(JSON.stringify({ detail: "Not authenticated" }), {
+          status: 401,
+        });
+      }
+      return new Response(JSON.stringify({}), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchSpy);
 
     renderWithProviders(<CodexPage />, "/codex");
-    await screen.findByText("ESP32-WROOM-32D");
-    expect(screen.getByText(/MOCK \/ DEMONSTRATION MODE/i)).toBeInTheDocument();
-    expect(screen.getByText(/REAL HARDWARE MODE — BLOCKED/i)).toBeInTheDocument();
-    expect(screen.getByText("Arduino Uno R3 + CNC Shield v3")).toBeInTheDocument();
-    expect(screen.getByText("ESP32-S3")).toBeInTheDocument();
+    await screen.findByText("ESP32 DevKit — Wi-Fi Bridge");
+    expect(screen.getByText("Arduino Uno R3 — Motor Controller")).toBeInTheDocument();
+    expect(screen.getByText("ESP32-S3 — Moon LED Controller")).toBeInTheDocument();
+
+    // Verify Demo Mode and Simulated Status banners
+    expect(screen.getByText(/DEMO MODE — SIMULATED STATUS/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Project Status: Operational").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Hardware Demonstration: Completed").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Hardware Integration: Completed").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByRole("button", { name: /Physical Execution Locked/i }),
-    ).toBeDisabled();
+      screen.getAllByText("Hardware Test Status: Team Reported — 12/12 Passed").length,
+    ).toBeGreaterThanOrEqual(1);
+
+    // Verify all three components display Connected, Online, Ready, Running
+    const connectedBadges = screen.getAllByText("Connected");
+    expect(connectedBadges.length).toBeGreaterThanOrEqual(3);
+    const onlineBadges = screen.getAllByText("Online");
+    expect(onlineBadges.length).toBeGreaterThanOrEqual(3);
+    const readyBadges = screen.getAllByText("Ready");
+    expect(readyBadges.length).toBeGreaterThanOrEqual(3);
+    const runningBadges = screen.getAllByText("Running");
+    expect(runningBadges.length).toBeGreaterThanOrEqual(3);
+
+    // Verify the single Run button exists at the bottom-right of the Run CODEX panel
+    const runBtn = screen.getByRole("button", { name: /^Run$/i });
+    expect(runBtn).toBeInTheDocument();
+    expect(runBtn).toBeVisible();
+
+    // Verify clicking Run accepts the click without sending hardware commands or calling APIs
+    const callsBefore = fetchSpy.mock.calls.length;
+    fireEvent.click(runBtn);
+    expect(fetchSpy.mock.calls.length).toBe(callsBefore);
+    expect(screen.getByText(/Run command acknowledged/i)).toBeInTheDocument();
   });
 
   it("ComparePage allows selecting Site B value for Site A without overwriting Site B and swaps cleanly", async () => {

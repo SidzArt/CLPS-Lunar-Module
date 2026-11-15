@@ -4,6 +4,12 @@
   <h1>CLPS Luna Browser</h1>
   <p><strong>Explore lunar landing sites. Compare mission conditions. Simulate the Sun–Earth–Moon geometry. Demonstrate the result with CODEX.</strong></p>
 
+  <h3>Presentation</h3>
+  <p><a href="CLPS_Luna_Browser.pdf">📊 <strong>CLPS Luna Browser PPT</strong></a></p>
+
+  <h3>Report and Documentation</h3>
+  <p><a href="Report.pdf">📄 <strong>CLPS Luna Browser Report</strong></a></p>
+
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12" />
     <img src="https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white" alt="FastAPI" />

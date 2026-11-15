@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { fetchSites } from "../api/endpoints";
 import { queryKeys } from "../api/queryKeys";
 import { useTheme } from "../app/ThemeContext";
+import { LunarSouthPoleSitesSection } from "../components/LunarSouthPoleSitesSection";
 import { SiteHeader } from "../components/SiteHeader";
 import { UtilitiesFooter } from "../components/UtilitiesFooter";
 import { HeadTags } from "../seo/HeadTags";
@@ -201,6 +202,9 @@ export function IntroPage() {
             </p>
           </article>
         </section>
+
+        {/* Lunar South Pole Candidate Landing Sites (Artemis III Shortlist) */}
+        <LunarSouthPoleSitesSection />
 
         {/* Required Support & Assist section with exact heading */}
         <section

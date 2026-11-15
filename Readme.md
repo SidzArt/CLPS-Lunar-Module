@@ -4,11 +4,17 @@
   <h1>CLPS Luna Browser</h1>
   <p><strong>Explore lunar landing sites. Compare mission conditions. Simulate the Sun–Earth–Moon geometry. Demonstrate the result with CODEX.</strong></p>
 
-  <h3>Presentation</h3>
-  <p><a href="CLPS_Luna_Browser.pdf">📊 <strong>CLPS Luna Browser PPT</strong></a></p>
-
-  <h3>Report and Documentation</h3>
-  <p><a href="Report.pdf">📄 <strong>CLPS Luna Browser Report</strong></a></p>
+  <p>
+    <strong>📊 Presentation:</strong>
+    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/CLPS_Luna_Browser.pdf"><strong>View in GitHub</strong></a>
+    &nbsp;•&nbsp;
+    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/CLPS_Luna_Browser.pdf"><strong>Direct PDF / Download</strong></a>
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+    <strong>📄 Documentation:</strong>
+    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/Report.pdf"><strong>View in GitHub</strong></a>
+    &nbsp;•&nbsp;
+    <a href="https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/Report.pdf"><strong>Direct PDF / Download</strong></a>
+  </p>
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12" />
@@ -21,6 +27,15 @@
     <img src="https://img.shields.io/badge/CODEX-Physical%20bench%20pending-D49A2A" alt="CODEX hardware bench verification pending" />
   </p>
 </div>
+
+---
+
+## 📑 Project Presentation & Technical Documentation
+
+| Document | Format | GitHub Repo Viewer | Direct PDF (Open in Browser) |
+| :--- | :--- | :--- | :--- |
+| 📊 **CLPS Luna Browser Presentation** | PDF Slides | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/CLPS_Luna_Browser.pdf) | [Direct View / Download](https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/CLPS_Luna_Browser.pdf) |
+| 📄 **Final Technical Project Report** | PDF Report | [Open in GitHub](https://github.com/SidzArt/CLPS-Lunar-Module/blob/main/Report.pdf) | [Direct View / Download](https://github.com/SidzArt/CLPS-Lunar-Module/raw/main/Report.pdf) |
 
 ---
 
